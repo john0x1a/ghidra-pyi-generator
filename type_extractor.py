@@ -41,6 +41,8 @@ def get_members(obj):
             pass
         except java.lang.NoClassDefFoundError:
             pass
+        except java.lang.IllegalAccessException:
+            pass
 
     # If something is in `__dict__` we want it directly from there.
     # Attribute resolution destroys reflection info when class fields are involved.
@@ -220,6 +222,8 @@ class Field(object):
                 value_repr = pretty_repr(value)
                 has_value = True
             except java.lang.IllegalArgumentException:
+                pass
+            except java.lang.IllegalAccessException:
                 pass
 
         return Field(
