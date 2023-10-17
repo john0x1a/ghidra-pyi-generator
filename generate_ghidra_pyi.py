@@ -43,7 +43,7 @@ def main():
         print('Extra package input canceled: Using default packages.')
         pass
 
-    # First iteration to parse the modules and create the .pyi files
+    failed_packages = []
     for package in packages:
         class_loader.load_all_classes(prefix='{package}.'.format(package=package))
         try:
@@ -51,8 +51,11 @@ def main():
             type_formatter.create_type_hints(pyi_root, extracted_package)
         except ImportError:
             print("Error importing package {package}".format(package=package))
-            packages.remove(package)
-            pass
+            failed_packages.append(package)
+
+    # remove packages that couldn't be loaded from the package list
+    for failed_package in failed_packages:
+        packages.remove(failed_package)
 
     pythonscript_handler.create_mock(pyi_root, my_globals)
 

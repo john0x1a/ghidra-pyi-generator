@@ -39,4 +39,8 @@ long_description_content_type='text/markdown',
     with open(os.path.join(pyi_root, 'setup.py'), 'w') as setup_file:
         setup_file.write(setup_code)
 
+    # create an empty README file that is required for setup
+    with open(os.path.join(pyi_root, 'README.md'), 'w'):
+        pass
+
     print('Run `pip install {}` to install ghidra-stubs package'.format(pyi_root))
