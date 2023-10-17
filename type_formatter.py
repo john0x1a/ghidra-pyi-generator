@@ -240,6 +240,46 @@ def get_all_packages(preparsed_packages):
     return packages
 
 
+def update_parent_imports(root, package):
+    # we want to add __init__.pyi to the directories of modules
+    # that were not directly included, but their submodules were included.
+    # This will be done by importing the subdirectories of the module directory in __init__.pyi
+    # (perhaps there is a cleaner way to do this)
+
+    if len(package.name.split(".")) == 1:
+        # package has no parent return
+        return
+
+    parent_path = os.path.join(root, get_package_path(package), os.pardir)
+    parent_module = ".".join(package.name.split(".")[:-1])
+
+    # repeat until we reach root stub directory
+    while os.path.abspath(parent_path) != os.path.abspath(root):
+
+        init_path = os.path.join(parent_path, "__init__.pyi")
+
+        imports = set()
+        if os.path.exists(init_path):
+            # that means that another submodule of this module was imported before.
+            # we want to keep all the current imports.
+            with open(init_path, 'r') as f:
+                imports.update(f.read().splitlines())
+
+        # import every subdirectory
+        for entry in os.listdir(parent_path):
+            if os.path.isdir(os.path.join(parent_path, entry)):
+                imports.add(
+                    'from . import {package} as {package}'.format(package=entry)
+                )
+
+        with open(init_path, 'w') as f:
+            f.write('\n'.join(sorted(imports)))
+
+        # update parent module and its path
+        parent_path = os.path.join(parent_path, os.pardir)
+        parent_module = ".".join(parent_module.split(".")[:-1])
+
+
 def create_type_hints(root, *packages):
     # type: (str, *Package) -> None
     all_packages = get_all_packages(packages)
@@ -250,5 +290,5 @@ def create_type_hints(root, *packages):
         package_path = get_package_path(package)
         init_path = os.path.join(root, package_path, '__init__.pyi')
         update_imports(init_path, package)
-
+        update_parent_imports(root, package)
         write_package_classes(root, package_path, package)

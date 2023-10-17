@@ -2,15 +2,16 @@ import os
 import shutil
 
 
-def generate_package(pyi_root, ghidra_version, stub_version="DEV"):
-
+def generate_package(pyi_root, ghidra_version, packages, stub_version="DEV"):
+    setup_packages = ",".join('"{package}"'.format(package=package.split(".")[0]) for package in packages)
+    setup_package_data = ",".join(
+        '"{package}" : find_stub_files("{package}")'.format(package=package.split(".")[0]) for package in packages)
     setup_code = """
 from setuptools import setup
 import os
 
-def find_stub_files():
+def find_stub_files(package):
     result = []
-    package = 'ghidra-stubs'
     for root, dirs, files in os.walk(package):
         for file in files:
             if file.endswith('.pyi'):
@@ -21,18 +22,20 @@ def find_stub_files():
 setup(name= 'ghidra-stubs',
 version='{ghidra_version}.{stub_version}',
 author='Tamir Bahar',
-packages=['ghidra-stubs'],
+packages=[{packages}],
 url="https://github.com/VDOO-Connected-Trust/ghidra-pyi-generator",
-package_data={{'ghidra-stubs': find_stub_files()}},
+package_data={{{package_data}}},
 long_description=open('README.md').read(),
 long_description_content_type='text/markdown',
 )
     """.format(ghidra_version=ghidra_version,
-               stub_version=stub_version)
+               stub_version=stub_version,
+               packages=setup_packages,
+               package_data=setup_package_data
+               )
 
-    stub_folder = os.path.join(pyi_root, 'ghidra-stubs')
-    os.rename(os.path.join(pyi_root, 'ghidra'), stub_folder)
-    shutil.copy2(os.path.join(pyi_root, 'ghidra_builtins.pyi'), stub_folder)
+    ghidra_stub_folder = os.path.join(pyi_root, 'ghidra')
+    shutil.copy2(os.path.join(pyi_root, 'ghidra_builtins.pyi'), ghidra_stub_folder)
     with open(os.path.join(pyi_root, 'setup.py'), 'w') as setup_file:
         setup_file.write(setup_code)
 

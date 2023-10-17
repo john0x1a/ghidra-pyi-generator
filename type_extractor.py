@@ -41,7 +41,7 @@ def get_members(obj):
             pass
         except java.lang.NoClassDefFoundError:
             pass
-        except java.lang.IllegalAccessException:
+        except (java.lang.IllegalAccessException, java.lang.IllegalAccessError):
             pass
 
     # If something is in `__dict__` we want it directly from there.
@@ -223,7 +223,7 @@ class Field(object):
                 has_value = True
             except java.lang.IllegalArgumentException:
                 pass
-            except java.lang.IllegalAccessException:
+            except (java.lang.IllegalAccessException, java.lang.IllegalAccessError):
                 pass
 
         return Field(
